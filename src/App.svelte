@@ -4,6 +4,7 @@
 	import game from '@sudoku/game';
 	import { modal } from '@sudoku/stores/modal';
 	import { gameWon } from '@sudoku/stores/game';
+	import { tryRestoreFromHash } from '@sudoku/stores/grid';
 	import Board from './components/Board/index.svelte';
 	import Controls from './components/Controls/index.svelte';
 	import Header from './components/Header/index.svelte';
@@ -23,6 +24,13 @@
 			hash = hash.slice(1);
 		}
 
+		const restoreResult = tryRestoreFromHash(hash);
+		if (restoreResult === 'full-state') {
+			// 已从完整状态恢复，无需显示欢迎模态框
+			return;
+		}
+
+		// 否则，按老师逻辑处理 sencode
 		let sencode;
 		if (validateSencode(hash)) {
 			sencode = hash;

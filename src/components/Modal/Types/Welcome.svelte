@@ -1,27 +1,45 @@
 <script>
-	import { difficulty as difficultyStore } from '@sudoku/stores/difficulty';
-	import { startNew, startCustom } from '@sudoku/game';
-	import { validateSencode } from '@sudoku/sencode';
-	import { DIFFICULTIES } from '@sudoku/constants';
+    import { difficulty as difficultyStore } from '@sudoku/stores/difficulty';
+    import { startNew, startCustom } from '@sudoku/game';
+    import { validateSencode } from '@sudoku/sencode';
+    import { restoreFromShareCode, isShareableCode } from '@sudoku/stores/grid';
+    import { DIFFICULTIES } from '@sudoku/constants';
 
-	export let data = {};
-	export let hideModal;
+    export let data = {};
+    export let hideModal;
 
-	let difficulty = $difficultyStore;
-	let sencode = data.sencode || '';
+    let difficulty = $difficultyStore;
+    let sencode = data.sencode || '';
 
-	$: enteredSencode = sencode.trim().length !== 0;
-	$: buttonDisabled = enteredSencode ? !validateSencode(sencode) : !DIFFICULTIES.hasOwnProperty(difficulty);
+    function normalizeInput(value) {
+        if (!value) return '';
 
-	function handleStart() {
-		if (validateSencode(sencode)) {
-			startCustom(sencode);
-		} else {
-			startNew(difficulty);
-		}
+        let trimmed = value.trim();
+        const hashIndex = trimmed.lastIndexOf('#');
+        if (hashIndex !== -1) {
+            trimmed = trimmed.slice(hashIndex + 1);
+        }
 
-		hideModal();
-	}
+        return trimmed;
+    }
+
+    $: normalizedSencode = normalizeInput(sencode);
+    $: enteredSencode = normalizedSencode.length !== 0;
+    $: buttonDisabled = enteredSencode
+        ? !(validateSencode(normalizedSencode) || isShareableCode(normalizedSencode))
+        : !DIFFICULTIES.hasOwnProperty(difficulty);
+
+    function handleStart() {
+        if (isShareableCode(normalizedSencode)) {
+            restoreFromShareCode(normalizedSencode);
+        } else if (validateSencode(normalizedSencode)) {
+            startCustom(normalizedSencode);
+        } else {
+            startNew(difficulty);
+        }
+
+        hideModal();
+    }
 </script>
 
 <h1 class="text-3xl font-semibold mb-6 leading-none">Welcome!</h1>
